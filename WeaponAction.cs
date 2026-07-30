@@ -42,7 +42,7 @@ namespace WeaponPaints
 
 					weapon.AttributeManager.Item.ItemDefinitionIndex = (ushort)newDefIndex.Key;
 					weapon.AttributeManager.Item.EntityQuality = 3;
-					
+
 					weapon.AttributeManager.Item.AttributeList.Attributes.RemoveAll();
 					weapon.AttributeManager.Item.NetworkedDynamicAttributes.Attributes.RemoveAll();
 					break;
