@@ -30,11 +30,11 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Restore
       run: dotnet restore
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c WeaponPaints -o ${{ env.OUTPUT_PATH }}
+      run: dotnet build ${{ env.PROJECT_PATH }} -c Release -o ${{ env.OUTPUT_PATH }}
 
   publish:
     if: github.event_name == 'push'
@@ -46,36 +46,35 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Restore
       run: dotnet restore
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c WeaponPaints -o ${{ env.OUTPUT_PATH }}
+      run: dotnet build ${{ env.PROJECT_PATH }} -c Release -o ${{ env.OUTPUT_PATH }}
     - name: Clean files
       run: |
         rm -f \
           ${{ env.OUTPUT_PATH }}/CounterStrikeSharp.API.dll \
           ${{ env.OUTPUT_PATH }}/McMaster.NETCore.Plugins.dll \
           ${{ env.OUTPUT_PATH }}/Microsoft.DotNet.PlatformAbstractions.dll \
-          ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll \
-    - name: Copy skins
-      run: cp -R website/data ${{ env.OUTPUT_PATH }}
-    - name: Zip
-      run: zip -r "${{ env.PROJECT_NAME }}.zip" "${{ env.OUTPUT_PATH }}" gamedata/
-    - name: Clean files Website
+          ${{ env.OUTPUT_PATH }}/Microsoft.Extensions.DependencyModel.dll
+    - name: Stage release layout
       run: |
-        rm -rf website/img/
+        mkdir -p release/addons/counterstrikesharp/plugins release/addons/counterstrikesharp/gamedata
+        cp -R ${{ env.OUTPUT_PATH }} release/addons/counterstrikesharp/plugins/${{ env.PROJECT_NAME }}
+        cp gamedata/weaponpaints.json release/addons/counterstrikesharp/gamedata/
     - name: Zip
-      uses: thedoctor0/zip-release@0.7.5
-      with:
-        type: 'zip'
-        filename: '${{ env.PROJECT_NAME }}-Website.zip'
-        path: website
+      run: cd release && zip -r "../${{ env.PROJECT_NAME }}.zip" addons
     - name: WeaponPaints
       uses: ncipollo/release-action@v1.12.0
       with:
-        artifacts: "${{ env.PROJECT_NAME }}.zip,${{ env.PROJECT_NAME }}-Website.zip"
+        artifacts: "${{ env.PROJECT_NAME }}.zip"
         name: "Build ${{ env.BUILD_NUMBER }}"
         tag: "build-${{ env.BUILD_NUMBER }}"
         body: |
-          Place the plugin in game/csgo/addons/counterstrikesharp/plugins/WeaponPaints
+          Extract WeaponPaints.zip into game/csgo/ (contains addons/counterstrikesharp/plugins/WeaponPaints
+          and addons/counterstrikesharp/gamedata/weaponpaints.json).
+
+          This fork does not include the website/ directory. Copy the skin data files
+          (data/skins_*.json, gloves_*, agents_*, music_*, collectibles_*) from an upstream
+          release into plugins/WeaponPaints/data/ before starting the server.
